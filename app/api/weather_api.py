@@ -8,7 +8,7 @@ load_dotenv()
 
 class WeatherAPI:
     def __init__(self):
-        self.key = os.getenv("key")
+        self.key = os.getenv("key") or "88433e09e4c94c69a45174928252403" 
         self.base_url = "http://api.weatherapi.com/v1"
     
     def get_current_weather(self, location):

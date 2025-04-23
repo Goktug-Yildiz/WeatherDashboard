@@ -2,6 +2,8 @@ import tkinter as tk
 from app.api.weather_api import WeatherAPI
 from app.api.wind_visualizer import WindVisualizer
 from ui.main_window import setup_main_window
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 
 class WeatherApp:
     def __init__(self, root):
@@ -9,9 +11,10 @@ class WeatherApp:
         self.api = WeatherAPI()
         self.wind_visualizer = WindVisualizer()
         self.historical_data = {}
+        self.canvas_widget = None  # For storing graph widget
         
+        # Initialize UI
         self.setup_ui()
-        
         self.create_weather_frame()
     
     def setup_ui(self):
@@ -28,7 +31,6 @@ class WeatherApp:
         )
     
     def setup_styles(self):
-        """Configure color and font styles"""
         # Color palette
         self.bg_color = "#f5f5f5"
         self.primary_color = "#495057"
@@ -49,7 +51,6 @@ class WeatherApp:
         self.root.configure(bg=self.bg_color)
     
     def get_weather(self):
-        """Fetch and display weather data"""
         location = self.location_entry.get().strip()
         if not location:
             self.status_label.config(text="Please enter a location")
@@ -60,18 +61,50 @@ class WeatherApp:
         
         try:
             current_weather = self.api.get_current_weather(location)
-            one_hour_data = self.api.get_historical_data(location)
+            self.historical_data = self.api.get_historical_data(location)
             
             if current_weather:
-                if one_hour_data:
-                    current_weather['one_hour_temp'] = one_hour_data['1_hour_ago']['temp_c']
-                    current_weather['one_hour_time'] = one_hour_data['1_hour_ago']['time']
+                if self.historical_data:
+                    current_weather['one_hour_temp'] = self.historical_data['1_hour_ago']['temp_c']
+                    current_weather['one_hour_time'] = self.historical_data['1_hour_ago']['time']
                 self.display_weather(current_weather)
+                self.plot_temperature_graph()
                 self.status_label.config(text="")
         except Exception as e:
             self.weather_frame.pack_forget()
             self.status_label.config(text=f"Error: {str(e)}", fg="#dc3545")
             print(f"Error fetching weather: {e}")
+    
+    def plot_temperature_graph(self):
+        if not self.historical_data or len(self.historical_data) < 2:
+            return
+        
+        times = []
+        temperatures = []
+        
+        for hour_key in sorted(self.historical_data.keys(), 
+                             key=lambda x: int(x.split('_')[0])):
+            entry = self.historical_data[hour_key]
+            times.append(entry['time'])
+            temperatures.append(entry['temp_c'])
+        
+        # Create the figure
+        fig, ax = plt.subplots(figsize=(8, 4), dpi=100)
+        ax.plot(times, temperatures, marker='o', linestyle='-', color='steelblue')
+        ax.set_title("Past 12-Hour Temperatures")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Temp (°C)")
+        ax.grid(True)
+        fig.tight_layout()
+        
+        # Clear previous graph if exists
+        if self.canvas_widget:
+            self.canvas_widget.get_tk_widget().destroy()
+        
+        # Embed the graph in Tkinter
+        self.canvas_widget = FigureCanvasTkAgg(fig, master=self.weather_frame)
+        self.canvas_widget.draw()
+        self.canvas_widget.get_tk_widget().pack(pady=10, fill=tk.BOTH, expand=True)
     
     def display_weather(self, weather_data):
         """Display weather information in the UI"""
@@ -122,7 +155,7 @@ class WeatherApp:
             fg=self.text_color
         ).grid(row=0, column=0, padx=10)
         
-        # Wind speed
+        # Wind
         tk.Label(
             details_frame,
             text=f"Wind: {weather_data['wind_speed']} km/h",
@@ -151,7 +184,6 @@ class WeatherApp:
             {'wind': self.wind_color}
         )
         
-        # Historical data if available
         if 'one_hour_temp' in weather_data:
             tk.Label(
                 self.weather_frame,
