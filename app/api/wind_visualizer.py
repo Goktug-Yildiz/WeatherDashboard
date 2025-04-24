@@ -3,7 +3,6 @@ import math
 
 class WindVisualizer:
     def draw_wind_direction(self, canvas, degree, speed, colors):
-        """Draw a complete wind direction compass with arrow and labels"""
         canvas.delete("all")
         
         center_x, center_y = 75, 75
@@ -75,7 +74,6 @@ class WindVisualizer:
         )
     
     def get_wind_direction_name(self, degree):
-        """Convert wind degree to compass direction name"""
         directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
                      "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
         index = round(degree / (360. / len(directions))) % len(directions)

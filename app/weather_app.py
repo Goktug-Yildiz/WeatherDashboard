@@ -89,7 +89,7 @@ class WeatherApp:
             temperatures.append(entry['temp_c'])
         
         # Create the figure
-        fig, ax = plt.subplots(figsize=(5, 2), dpi=70)  # Very compact
+        fig, ax = plt.subplots(figsize=(5, 2), dpi=70)
         ax.plot(times, temperatures, marker='o', linestyle='-', color='steelblue')
         ax.set_title("Past 12-Hour Temperatures")
         ax.set_xlabel("Time")
@@ -107,13 +107,11 @@ class WeatherApp:
         self.canvas_widget.get_tk_widget().pack(pady=10, fill=tk.BOTH, expand=True)
 
     def set_and_search_location(self, location):
-        """Set location in entry and immediately search"""
         self.location_entry.delete(0, tk.END)
         self.location_entry.insert(0, location)
         self.get_weather()
     
     def display_weather(self, weather_data):
-        """Display weather information in the UI"""
         # Clear previous widgets
         for widget in self.weather_frame.winfo_children():
             widget.destroy()

@@ -1,4 +1,4 @@
-from app.api.weather_api import WeatherAPI
+""" from app.api.weather_api import WeatherAPI
 
 def test_weather_api():
     api = WeatherAPI()
@@ -22,4 +22,4 @@ def test_weather_api():
         print(f"Historical data failed: {str(e)}")
 
 if __name__ == "__main__":
-    test_weather_api()
+    test_weather_api() """

@@ -13,7 +13,7 @@ def create_header(root, app):
     
     title_label = tk.Label(
         header_frame, 
-        text="Weather Forecast", 
+        text="Weather Dashboard", 
         font=app.title_font, 
         bg=app.highlight_color, 
         fg=app.text_color
