@@ -4,6 +4,7 @@ from app.api.wind_visualizer import WindVisualizer
 from ui.main_window import setup_main_window
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+from ui.components.forecast import create_forecast_display  # Import the forecast component
 
 class WeatherApp:
     def __init__(self, root):
@@ -11,7 +12,7 @@ class WeatherApp:
         self.api = WeatherAPI()
         self.wind_visualizer = WindVisualizer()
         self.historical_data = {}
-        self.canvas_widget = None  # For storing graph widget
+        self.canvas_widget = None
         
         # Initialize UI
         self.setup_ui()
@@ -60,16 +61,21 @@ class WeatherApp:
         self.root.update()
         
         try:
+            # Get all weather data
             current_weather = self.api.get_current_weather(location)
             self.historical_data = self.api.get_historical_data(location)
+            forecast_data = self.api.get_forecast(location)  # New forecast data
             
             if current_weather:
                 if self.historical_data:
                     current_weather['one_hour_temp'] = self.historical_data['1_hour_ago']['temp_c']
                     current_weather['one_hour_time'] = self.historical_data['1_hour_ago']['time']
-                self.display_weather(current_weather)
+                
+                # Pass forecast_data to display_weather
+                self.display_weather(current_weather, forecast_data)
                 self.plot_temperature_graph()
                 self.status_label.config(text="")
+                
         except Exception as e:
             self.weather_frame.pack_forget()
             self.status_label.config(text=f"Error: {str(e)}", fg="#dc3545")
@@ -88,7 +94,6 @@ class WeatherApp:
             times.append(entry['time'])
             temperatures.append(entry['temp_c'])
         
-        # Create the figure
         fig, ax = plt.subplots(figsize=(5, 2), dpi=70)
         ax.plot(times, temperatures, marker='o', linestyle='-', color='steelblue')
         ax.set_title("Past 12-Hour Temperatures")
@@ -97,11 +102,9 @@ class WeatherApp:
         ax.grid(True)
         fig.tight_layout()
         
-        # Clear previous graph if exists
         if self.canvas_widget:
             self.canvas_widget.get_tk_widget().destroy()
         
-        # Embed the graph in Tkinter
         self.canvas_widget = FigureCanvasTkAgg(fig, master=self.weather_frame)
         self.canvas_widget.draw()
         self.canvas_widget.get_tk_widget().pack(pady=10, fill=tk.BOTH, expand=True)
@@ -111,12 +114,13 @@ class WeatherApp:
         self.location_entry.insert(0, location)
         self.get_weather()
     
-    def display_weather(self, weather_data):
+    def display_weather(self, weather_data, forecast_data=None):
+        """Updated to include forecast_data parameter"""
         # Clear previous widgets
         for widget in self.weather_frame.winfo_children():
             widget.destroy()
         
-        # Location information
+        # Current weather display
         location_frame = tk.Frame(self.weather_frame, bg=self.card_color)
         location_frame.pack(fill="x", pady=(0, 10))
         
@@ -128,7 +132,6 @@ class WeatherApp:
             fg=self.text_color
         ).pack(side="left")
         
-        # Temperature display
         tk.Label(
             self.weather_frame,
             text=f"{weather_data['temperature']}°C",
@@ -137,7 +140,6 @@ class WeatherApp:
             fg=self.primary_color
         ).pack(pady=10)
         
-        # Weather condition
         tk.Label(
             self.weather_frame,
             text=weather_data['condition'],
@@ -146,11 +148,10 @@ class WeatherApp:
             fg=self.text_color
         ).pack()
         
-        # Additional details frame
+        # Current conditions frame
         details_frame = tk.Frame(self.weather_frame, bg=self.card_color)
         details_frame.pack(pady=15)
         
-        # Humidity
         tk.Label(
             details_frame,
             text=f"Humidity: {weather_data['humidity']}%",
@@ -159,7 +160,6 @@ class WeatherApp:
             fg=self.text_color
         ).grid(row=0, column=0, padx=10)
         
-        # Wind
         tk.Label(
             details_frame,
             text=f"Wind: {weather_data['wind_speed']} km/h",
@@ -188,6 +188,7 @@ class WeatherApp:
             {'wind': self.wind_color}
         )
         
+        # Historical temperature (1 hour ago)
         if 'one_hour_temp' in weather_data:
             tk.Label(
                 self.weather_frame,
@@ -196,6 +197,11 @@ class WeatherApp:
                 bg=self.card_color,
                 fg=self.secondary_color
             ).pack(pady=5)
+        
+        # Add forecast display if data exists
+        if forecast_data:
+            forecast_frame = create_forecast_display(self.weather_frame, self, forecast_data)
+            forecast_frame.pack(fill="x", pady=15)
         
         # Make sure frame is visible
         self.weather_frame.pack(fill="both", expand=True, padx=20, pady=20)

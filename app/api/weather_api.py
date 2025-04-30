@@ -73,3 +73,20 @@ class WeatherAPI:
             
         except requests.exceptions.RequestException as e:
             raise Exception(f"Error fetching historical data: {e}")
+        
+    def get_forecast(self, location, days=3):
+        try:
+            params = {
+                'key': self.key,
+                'q': location,
+                'days': days,
+                'aqi': 'no',
+                'alerts': 'no'
+            }
+            response = requests.get(f"{self.base_url}/forecast.json", params=params)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print(f"Forecast error: {e}")
+            return None
+        
