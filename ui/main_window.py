@@ -1,4 +1,5 @@
 import tkinter as tk
+import sys
 from ui.components.header import create_header
 from ui.components.input_frame import create_input_frame
 
@@ -28,19 +29,19 @@ def setup_main_window(root, app):
     )
     title_label.pack(side="left")
 
-    # Quit button (right side)
+    # Quit button (right side) - now with full exit functionality
     quit_button = tk.Button(
         header_frame,
         text="Quit",
-        command=root.destroy,
-        bg="#dc3545",  # Red color for visibility
+        command=lambda: [root.destroy(), sys.exit()],  # Destroy window and exit process
+        bg="#dc3545",
         fg="white",
         font=app.subtitle_font,
         padx=15,
         pady=5,
         bd=0,
         relief=tk.FLAT,
-        activebackground="#c82333",  # Darker red when pressed
+        activebackground="#c82333",
         cursor="hand2"
     )
     quit_button.pack(side="right")
