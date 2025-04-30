@@ -4,27 +4,45 @@ from mysql.connector import Error
 class DatabaseHandler:
     def __init__(self):
         self.connection = None
+        self.is_connected = False
         self.connect()
     
     def connect(self):
+        """Attempt to connect to MySQL database"""
         try:
             self.connection = mysql.connector.connect(
                 host='localhost',
                 user='root',
                 password='',
-                database='weather_app'
+                database='weather_app',
+                autocommit=False
             )
+            self.is_connected = True
+            print("Successfully connected to MySQL database")
         except Error as e:
             print(f"Error connecting to MySQL: {e}")
+            self.is_connected = False
+        return self.is_connected
+    
+    def ensure_connection(self):
+        if not self.is_connected:
+            return self.connect()
+        
+        try:
+            self.connection.ping(reconnect=True, attempts=3, delay=1)
+            return True
+        except Error:
+            self.is_connected = False
+            return self.connect()
     
     def save_current_weather(self, location_data, weather_data):
-        if not self.connection:
-            self.connect()
+        if not self.ensure_connection():
+            print("Database not available - skipping save")
+            return False
             
+        cursor = None
         try:
-            cursor = self.connection.cursor()
-            
-            # Insert or get location
+            cursor = self.connection.cursor() 
             cursor.execute("""
                 INSERT INTO locations (city, region, country)
                 VALUES (%s, %s, %s)
@@ -33,7 +51,6 @@ class DatabaseHandler:
             
             location_id = cursor.lastrowid
             
-            # Insert weather data
             cursor.execute("""
                 INSERT INTO weather_data (
                     location_id, temperature, feels_like, condition_text,
@@ -56,43 +73,9 @@ class DatabaseHandler:
             
         except Error as e:
             print(f"Error saving weather data: {e}")
+            if self.connection:
+                self.connection.rollback()
             return False
-        finally:
-            if cursor:
-                cursor.close()
-    
-    def save_forecast(self, location_data, forecast_data):
-        # Similar implementation for forecasts
-        pass
-    
-    def get_historical_data(self, location, days=7):
-        if not self.connection:
-            self.connect()
-            
-        try:
-            cursor = self.connection.cursor(dictionary=True)
-            
-            cursor.execute("""
-                SELECT location_id FROM locations 
-                WHERE city = %s AND region = %s AND country = %s
-            """, (location['city'], location['region'], location['country']))
-            
-            location_result = cursor.fetchone()
-            if not location_result:
-                return None
-                
-            cursor.execute("""
-                SELECT * FROM weather_data
-                WHERE location_id = %s
-                ORDER BY last_updated DESC
-                LIMIT %s
-            """, (location_result['location_id'], days))
-            
-            return cursor.fetchall()
-            
-        except Error as e:
-            print(f"Error fetching historical data: {e}")
-            return None
         finally:
             if cursor:
                 cursor.close()
@@ -100,3 +83,5 @@ class DatabaseHandler:
     def close(self):
         if self.connection and self.connection.is_connected():
             self.connection.close()
+            self.is_connected = False
+            print("Database connection closed")
