@@ -239,7 +239,7 @@ class WeatherApp:
             days_frame = tk.Frame(forecast_card, bg=self.card_color)
             days_frame.pack(fill="x")
 
-            for i, day in enumerate(forecast_data['forecast']['forecastday'][:3]):
+            for i, day in enumerate(forecast_data['forecast']['forecastday'][:5]):
                 day_card = tk.Frame(
                     days_frame,
                     bg=self.card_color,

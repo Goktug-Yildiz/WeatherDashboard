@@ -19,7 +19,6 @@ def setup_main_window(root, app):
     header_frame.pack(fill="x")
     header_frame.pack_propagate(False)
     
-    # Application title (left side)
     title_label = tk.Label(
         header_frame,
         text="Weather Forecast",
@@ -29,11 +28,10 @@ def setup_main_window(root, app):
     )
     title_label.pack(side="left")
 
-    # Quit button (right side) - now with full exit functionality
     quit_button = tk.Button(
         header_frame,
         text="Quit",
-        command=lambda: [root.destroy(), sys.exit()],  # Destroy window and exit process
+        command=lambda: [root.destroy(), sys.exit()],
         bg="#dc3545",
         fg="white",
         font=app.subtitle_font,
